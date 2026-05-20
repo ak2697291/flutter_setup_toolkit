@@ -100,6 +100,8 @@ class ForgeUIConfigLoader {
       allowGoogleLogin: yaml['allow_google_login'] is bool ? yaml['allow_google_login'] as bool : true,
       allowAppleLogin: yaml['allow_apple_login'] is bool ? yaml['allow_apple_login'] as bool : true,
       allowForgotPassword: yaml['allow_forgot_password'] is bool ? yaml['allow_forgot_password'] as bool : true,
+      requireName: yaml['require_name'] is bool ? yaml['require_name'] as bool : false,
+      requireContactNumber: yaml['require_contact_number'] is bool ? yaml['require_contact_number'] as bool : false,
     );
   }
 

@@ -36,6 +36,8 @@ class _ForgeLoginScreenState extends ConsumerState<ForgeLoginScreen> with Single
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _contactNumberController = TextEditingController();
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -79,6 +81,8 @@ class _ForgeLoginScreenState extends ConsumerState<ForgeLoginScreen> with Single
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _nameController.dispose();
+    _contactNumberController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -141,7 +145,12 @@ class _ForgeLoginScreenState extends ConsumerState<ForgeLoginScreen> with Single
       if (_authMode == AuthMode.signIn) {
         await authNotifier.signInWithEmail(email, password);
       } else {
-        await authNotifier.signUpWithEmail(email, password);
+        await authNotifier.signUpWithEmail(
+          email, 
+          password,
+          name: _resolveConfig().requireName ? _nameController.text.trim() : null,
+          contactNumber: _resolveConfig().requireContactNumber ? _contactNumberController.text.trim() : null,
+        );
       }
 
       // Check new state
@@ -395,6 +404,46 @@ class _ForgeLoginScreenState extends ConsumerState<ForgeLoginScreen> with Single
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          if (_authMode == AuthMode.signUp && _resolveConfig().requireName) ...[
+                            TextFormField(
+                              controller: _nameController,
+                              keyboardType: TextInputType.name,
+                              decoration: InputDecoration(
+                                labelText: 'Full Name',
+                                prefixIcon: const Icon(Icons.person_outline),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.3))),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: primaryColor, width: 2)),
+                              ),
+                              validator: (val) {
+                                if (_authMode == AuthMode.signUp && _resolveConfig().requireName) {
+                                  if (val == null || val.trim().isEmpty) return 'Full Name is required';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                          if (_authMode == AuthMode.signUp && _resolveConfig().requireContactNumber) ...[
+                            TextFormField(
+                              controller: _contactNumberController,
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                labelText: 'Contact Number (e.g. +1 123 456 7890)',
+                                prefixIcon: const Icon(Icons.phone_outlined),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.3))),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: primaryColor, width: 2)),
+                              ),
+                              validator: (val) {
+                                if (_authMode == AuthMode.signUp && _resolveConfig().requireContactNumber) {
+                                  if (val == null || val.trim().isEmpty) return 'Contact Number is required';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,

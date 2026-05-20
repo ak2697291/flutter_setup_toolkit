@@ -27,9 +27,21 @@ class SupabaseBackend implements BackendService {
   }
 
   @override
-  Future<Either<ForgeFailure, AuthUserDetails>> signUpWithEmail({required String email, required String password}) async {
+  Future<Either<ForgeFailure, AuthUserDetails>> signUpWithEmail({
+    required String email,
+    required String password,
+    String? name,
+    String? contactNumber,
+  }) async {
     try {
-      final res = await _client.auth.signUp(email: email, password: password);
+      final res = await _client.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          if (name != null) 'full_name': name,
+          if (contactNumber != null) 'contact_number': contactNumber,
+        },
+      );
       return Right(_mapUser(res.user!));
     } on AuthException catch (e) {
       return Left(AuthFailure(message: e.message, code: e.statusCode));
@@ -161,6 +173,7 @@ class SupabaseBackend implements BackendService {
   AuthUserDetails _mapUser(User user) => AuthUserDetails(
     id: user.id, email: user.email,
     displayName: user.userMetadata?['full_name'] as String?,
+    contactNumber: user.userMetadata?['contact_number'] as String?,
     photoUrl: user.userMetadata?['avatar_url'] as String?,
     emailVerified: user.emailConfirmedAt != null,
   );

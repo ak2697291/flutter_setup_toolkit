@@ -131,6 +131,7 @@ class _ForgeProfileScreenState extends ConsumerState<ForgeProfileScreen> {
     final user = ref.watch(currentUserProvider);
     final userEmail = user?.email ?? 'developer@flutterforge.com';
     final userDisplayName = user?.displayName ?? 'Forge Developer';
+    final userContact = user?.contactNumber;
     final photoUrl = user?.photoUrl;
     
     // Premium badge custom gradients based on tier
@@ -267,6 +268,15 @@ class _ForgeProfileScreenState extends ConsumerState<ForgeProfileScreen> {
                             color: colors.outline,
                           ),
                         ),
+                        if (userContact != null && userContact.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            userContact,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colors.outline,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         
                         // Active subscription badge
