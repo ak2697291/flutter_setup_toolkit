@@ -122,6 +122,8 @@ class ForgeLoginConfig {
   final bool allowGoogleLogin;
   final bool allowAppleLogin;
   final bool allowForgotPassword;
+  final bool requireName;
+  final bool requireContactNumber;
 
   const ForgeLoginConfig({
     this.title,
@@ -132,6 +134,8 @@ class ForgeLoginConfig {
     this.allowGoogleLogin = true,
     this.allowAppleLogin = true,
     this.allowForgotPassword = true,
+    this.requireName = false,
+    this.requireContactNumber = false,
   });
 }
 

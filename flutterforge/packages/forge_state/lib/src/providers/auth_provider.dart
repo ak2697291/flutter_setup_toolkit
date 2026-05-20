@@ -77,11 +77,18 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     );
   }
 
-  Future<void> signUpWithEmail(String email, String password) async {
+  Future<void> signUpWithEmail(
+    String email,
+    String password, {
+    String? name,
+    String? contactNumber,
+  }) async {
     state = const AsyncData(AuthLoading());
     final result = await _backend.signUpWithEmail(
       email: email,
       password: password,
+      name: name,
+      contactNumber: contactNumber,
     );
     result.fold(
       (failure) => state = AsyncData(AuthError(failure.message)),

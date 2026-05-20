@@ -39,9 +39,18 @@ class SupabaseBackendService implements BackendService {
   Future<Either<ForgeFailure, AuthUserDetails>> signUpWithEmail({
     required String email,
     required String password,
+    String? name,
+    String? contactNumber,
   }) async {
     try {
-      final res = await _client.auth.signUp(email: email, password: password);
+      final res = await _client.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          if (name != null) 'display_name': name,
+          if (contactNumber != null) 'contact_number': contactNumber,
+        },
+      );
       if (res.user == null) {
         return Left(ForgeFailure.auth('Sign up failed — check your email for confirmation'));
       }
@@ -310,6 +319,7 @@ Stream<List<Map<String, dynamic>>> watchCollection({
         id: user.id,
         email: user.email,
         displayName: user.userMetadata?['display_name'] as String?,
+        contactNumber: user.userMetadata?['contact_number'] as String?,
         photoUrl: user.userMetadata?['avatar_url'] as String?, // FIX: was avatarUrl
         emailVerified: user.emailConfirmedAt != null,           // FIX: was missing
       );

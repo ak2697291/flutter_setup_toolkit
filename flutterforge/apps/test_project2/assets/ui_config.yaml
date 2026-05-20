@@ -34,8 +34,10 @@ login:
   subtitle: "Access your premium FlutterForge workspace"
   show_social_logins: true
   allow_sign_up: true
+  require_name: true  
+  require_contact_number: true           # Name field hidden on sign up form
   logo_icon: "bolt"
-  allow_google_login: true
+  allow_google_login: false
   allow_apple_login: false       # Google button will occupy full width
   allow_forgot_password: false   # Forgot password link hidden
 

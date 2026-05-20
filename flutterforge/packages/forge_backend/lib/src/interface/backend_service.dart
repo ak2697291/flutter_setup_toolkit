@@ -6,7 +6,12 @@ import 'package:forge_core/forge_core.dart';
 abstract class BackendService {
   // ─── Auth ───────────────────────────────────────────────────────
   Future<Either<ForgeFailure, AuthUserDetails>> signInWithEmail({required String email, required String password});
-  Future<Either<ForgeFailure, AuthUserDetails>> signUpWithEmail({required String email, required String password});
+  Future<Either<ForgeFailure, AuthUserDetails>> signUpWithEmail({
+    required String email,
+    required String password,
+    String? name,
+    String? contactNumber,
+  });
   Future<Either<ForgeFailure, AuthUserDetails>> signInWithGoogle();
   Future<Either<ForgeFailure, AuthUserDetails>> signInWithApple();
   Future<Either<ForgeFailure, Unit>> signOut();
@@ -31,7 +36,15 @@ class AuthUserDetails {
   final String id;
   final String? email;
   final String? displayName;
+  final String? contactNumber;
   final String? photoUrl;
   final bool emailVerified;
-  const AuthUserDetails({required this.id, this.email, this.displayName, this.photoUrl, this.emailVerified = false});
+  const AuthUserDetails({
+    required this.id,
+    this.email,
+    this.displayName,
+    this.contactNumber,
+    this.photoUrl,
+    this.emailVerified = false,
+  });
 }
