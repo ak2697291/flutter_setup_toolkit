@@ -1,0 +1,101 @@
+global:
+  app_name: "ForgeApp Pro"
+  primary_color: "#E0115F"       # Ruby red
+  secondary_color: "#FF5F1F"     # Neon Orange
+
+onboarding:
+  show_skip: true
+  show_indicators: false         # Toggle indicators to verify dynamic page indicator realignment
+  pages:
+    - title: "Next-Gen Rapid Architecture"
+      description: "Generate fully decoupled, standardized Flutter modules instantly. Complete with clean repositories, providers, and models."
+      icon: "architecture"
+      theme_color: "#E0115F"
+      gradient_colors:
+        - "#E0115F"
+        - "#FF5F1F"
+    - title: "Global Scaling Monorepos"
+      description: "Manage multiple production apps, administrative tools, and internal UI libraries seamlessly in one Melos workspace."
+      icon: "layers"
+      theme_color: "#11998E"
+      gradient_colors:
+        - "#11998E"
+        - "#38EF7D"
+    - title: "Unified payment integrations"
+      description: "One-click Razorpay, Stripe, and Apple IAP module provisioning. Spend time building value, not payment logic."
+      icon: "wallet"
+      theme_color: "#B91D73"
+      gradient_colors:
+        - "#F953C6"
+        - "#B91D73"
+
+login:
+  title: "Secure Portal"
+  subtitle: "Access your premium FlutterForge workspace"
+  show_social_logins: true
+  allow_sign_up: true
+  logo_icon: "bolt"
+  allow_google_login: true
+  allow_apple_login: false       # Google button will occupy full width
+  allow_forgot_password: false   # Forgot password link hidden
+
+subscription:
+  title: "Accelerate Development"
+  subtitle: "Upgrade to one of our optimized plans for production-grade scale and performance."
+  currency: "INR"
+  show_checkout_button: true    # checkout action hidden for pure pricing presentation
+  plans:
+    - name: "Hobbyist"
+      price: 0
+      currency: "INR"
+      period: "free"
+      description: "Perfect for learning and building personal prototypes."
+      features:
+        - "1 Monorepo Workspace"
+        - "Basic Local Storage Providers"
+        - "Console Analytics Logging"
+        - "Community Support"
+      gradient_colors:
+        - "#8E2DE2"
+        - "#4A00E0"
+      is_popular: false
+    - name: "Pro Developer"
+      price: 899
+      currency: "INR"
+      period: "mo"
+      description: "Our most popular offering for serious production projects."
+      features:
+        - "Unlimited Monorepo Workspaces"
+        - "Supabase Backend Provisioning"
+        - "Stripe + Razorpay Payment Modules"
+        - "Full Sentry + PostHog Diagnostics"
+        - "Priority Support 24/7"
+      gradient_colors:
+        - "#E0115F"
+        - "#FF5F1F"
+      is_popular: true
+    - name: "Enterprise Hub"
+      price: 3999
+      currency: "INR"
+      period: "mo"
+      description: "For teams requiring customized integrations, performance SLAs, and dedicated compute."
+      features:
+        - "Dedicated Premium Support Representative"
+        - "Custom Gateway Providers Integration"
+        - "SLA Guaranteed Database Clusters"
+        - "Tailored Workspace Integrations"
+        - "White-glove melos migrations"
+      gradient_colors:
+        - "#11998E"
+        - "#38EF7D"
+      is_popular: false
+
+profile:
+  title: "My Account"
+  premium_tier_name: "Pro Developer"
+  show_billing_history: true
+  show_preferences: true
+  show_support: true
+  help_center_url: "https://support.flutterforge.com"
+  allow_edit_profile: false      # Edit profile icon hidden
+  allow_logout: true            # Logout button hidden

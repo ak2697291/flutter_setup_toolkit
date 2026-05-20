@@ -403,6 +403,13 @@ packages:
       relative: true
     source: path
     version: "1.0.0"
+  forge_ui:
+    dependency: "direct main"
+    description:
+      path: "../../packages/forge_ui"
+      relative: true
+    source: path
+    version: "1.0.0"
   freezed_annotation:
     dependency: transitive
     description:
