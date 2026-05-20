@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# forge.yaml — FlutterForge project configuration
+# Run `forge generate` after editing this file to regenerate boilerplate.
+# All $ENV_VAR values are loaded from .env.dev.json / .env.prod.json
+# ─────────────────────────────────────────────────────────────────────────────
+
+app:
+  name: MyApp
+  bundle_id: com.example.myapp         # Reverse-domain format, used for iOS/Android IDs
+  platforms: [ios, android, web]        # Platforms to support
+  primary_color: '#6200EA'              # Material seed color (hex)
+  font_family: Roboto                   # Font family (must be in pubspec.yaml fonts)
+
+# ─── Backend ──────────────────────────────────────────────────────────────────
+# Choose ONE provider. The rest of your app uses BackendService interface.
+# Swap providers without changing any feature code.
+
+backend:
+  provider: supabase                    # Options: supabase | firebase
+
+  supabase:
+    url: $SUPABASE_URL                  # From: supabase.com → Settings → API
+    anon_key: $SUPABASE_ANON_KEY        # Public anon key (safe to use on client)
+
+  # firebase:                           # Uncomment to use Firebase instead
+  #   # Run: flutterfire configure
+  #   # This generates firebase_options.dart — no manual config needed here.
+
+# ─── Payments ─────────────────────────────────────────────────────────────────
+# Multiple providers supported. Each is registered separately in DI.
+# Use sl<PaymentGateway>(instanceName: 'razorpay') to get a specific one.
+
+payments:
+  providers: [razorpay, stripe]         # Options: razorpay | stripe | iap
+  currency: INR                         # Default currency
+
+  razorpay:
+    key_id: $RAZORPAY_KEY_ID            # From: dashboard.razorpay.com → Settings → API Keys
+    # Use rzp_test_* for test mode, rzp_live_* for production
+
+  stripe:
+    publishable_key: $STRIPE_KEY        # From: dashboard.stripe.com → Developers → API keys
+    merchant_id: merchant.com.example   # For Apple Pay (optional)
+    # Use pk_test_* for test mode, pk_live_* for production
+
+# ─── Analytics ────────────────────────────────────────────────────────────────
+# All providers receive the same events via Analytics.track().
+# Add 'console' for dev (logs to terminal), remove it in prod.
+
+analytics:
+  providers: [posthog, firebase]        # Options: posthog | firebase | mixpanel | console
+
+  posthog:
+    api_key: $POSTHOG_API_KEY           # From: app.posthog.com → Project Settings
+    host: https://app.posthog.com       # Use https://eu.posthog.com for EU data residency
+
+  # mixpanel:
+  #   token: $MIXPANEL_TOKEN
+
+# ─── Monitoring ───────────────────────────────────────────────────────────────
+
+monitoring:
+  crash: sentry                         # Options: sentry | firebase
+  performance: firebase                 # Options: firebase | datadog | none
+
+  sentry:
+    dsn: $SENTRY_DSN                    # From: sentry.io → Settings → Projects → DSN
+    traces_sample_rate: 1.0             # 0.0–1.0 (lower in prod, e.g. 0.2)
+    environment: dev                    # Automatically set per build
+
+# ─── State Management ─────────────────────────────────────────────────────────
+
+state:
+  manager: riverpod                     # Options: riverpod | bloc
+  local_db: isar                        # Options: isar | hive | none
+  secure_storage: true                  # flutter_secure_storage for tokens/keys
+  cache_ttl_minutes: 5                  # Default in-memory cache TTL

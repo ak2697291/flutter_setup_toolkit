@@ -1,0 +1,28 @@
+name: flutterforge
+repository: https://github.com/yourusername/flutterforge
+
+packages:
+  - packages/*
+  - forge_cli
+  - apps/*
+
+scripts:
+  analyze:
+    run: melos exec -- dart analyze
+    description: Analyze all packages
+
+  test:
+    run: melos exec -- flutter test
+    description: Run all tests
+
+  clean:
+    run: melos exec -- flutter clean
+    description: Clean all packages
+
+  get:
+    run: melos exec -- flutter pub get
+    description: Get dependencies for all packages
+
+  generate:
+    run: melos exec -- dart run build_runner build --delete-conflicting-outputs
+    description: Run code generation across all packages

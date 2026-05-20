@@ -1,0 +1,21 @@
+app:
+  name: Test Project2
+  bundle_id: com.example.testproject2
+  platforms: [ios, android, web]
+  primary_color: '#6200EA'
+
+backend:
+  provider: supabase
+  supabase:
+    url: $SUPABASE_URL
+    anon_key: $SUPABASE_ANON_KEY
+
+analytics:
+  providers: [posthog, firebase]
+  posthog:
+    api_key: $POSTHOG_API_KEY
+
+state:
+  manager: riverpod
+  local_db: isar
+
