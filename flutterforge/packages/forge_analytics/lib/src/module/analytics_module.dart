@@ -28,7 +28,10 @@ class AnalyticsModule implements ForgeModule {
           providerInstances.add(ConsoleAnalyticsProvider());
 
         case AnalyticsProviderType.posthog:
-          assert(posthogApiKey != null, 'posthogApiKey required');
+          if (posthogApiKey == null || posthogApiKey!.isEmpty || posthogApiKey == 'YOUR_POSTHOG_API_KEY') {
+            print('⚠️ PostHog: posthogApiKey is missing or set to default placeholder. Skipping PostHog initialization.');
+            break;
+          }
           // Dynamic import to avoid hard dependency
           try {
             final posthog = await _initPostHog(posthogApiKey!, posthogHost);
@@ -47,7 +50,10 @@ class AnalyticsModule implements ForgeModule {
           }
 
         case AnalyticsProviderType.mixpanel:
-          assert(mixpanelToken != null, 'mixpanelToken required');
+          if (mixpanelToken == null || mixpanelToken!.isEmpty || mixpanelToken == 'YOUR_MIXPANEL_TOKEN') {
+            print('⚠️ Mixpanel: mixpanelToken is missing or set to default placeholder. Skipping Mixpanel initialization.');
+            break;
+          }
           // Mixpanel provider: similar pattern
           break;
       }

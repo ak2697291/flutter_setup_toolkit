@@ -70,6 +70,14 @@ class CreateCommand extends Command<void> {
     print('🔐 Writing .env template files...');
     _writeEnvFiles(projectDir.path, backend);
 
+    // 3.5. Write assets/ui_config.yaml
+    print('🎨 Writing assets/ui_config.yaml...');
+    _writeUiConfigYaml(projectDir.path, appName);
+
+    // 3.6. Update pubspec.yaml assets section
+    print('📦 Updating pubspec.yaml assets...');
+    _updatePubspecAssets(projectDir.path);
+
     // 4. Write .gitignore additions
     _updateGitignore(projectDir.path);
 
@@ -98,6 +106,9 @@ Next steps:
   # Or use the forge CLI:
   forge generate    # Regenerates DI and routing from forge.yaml
   forge doctor      # Checks your setup
+
+  # Customize your UI:
+  nano assets/ui_config.yaml
 
 📖 Full setup guide: See SETUP.md in your project root.
 ''');
@@ -195,6 +206,146 @@ backend:
             .join(',\n') +
         '\n}';
     File(p.join(dir, '.env.prod.json')).writeAsStringSync(prodJson);
+  }
+
+  void _writeUiConfigYaml(String dir, String appName) {
+    final assetsDir = Directory(p.join(dir, 'assets'));
+    if (!assetsDir.existsSync()) {
+      assetsDir.createSync(recursive: true);
+    }
+
+    final formattedName = _toTitleCase(appName);
+    final yamlContent = '''global:
+  app_name: "$formattedName"
+  primary_color: "#6200EA"       # Default primary purple
+  secondary_color: "#03DAC6"     # Teal
+
+onboarding:
+  show_skip: true
+  show_indicators: true
+  pages:
+    - title: "Welcome to $formattedName"
+      description: "Generate fully decoupled, standardized Flutter modules instantly. Complete with clean repositories, providers, and models."
+      icon: "architecture"
+      theme_color: "#6200EA"
+      gradient_colors:
+        - "#6200EA"
+        - "#03DAC6"
+    - title: "Global Scaling Monorepos"
+      description: "Manage multiple production apps, administrative tools, and internal UI libraries seamlessly in one Melos workspace."
+      icon: "layers"
+      theme_color: "#11998E"
+      gradient_colors:
+        - "#11998E"
+        - "#38EF7D"
+    - title: "Unified payment integrations"
+      description: "One-click Razorpay, Stripe, and Apple IAP module provisioning. Spend time building value, not payment logic."
+      icon: "wallet"
+      theme_color: "#B91D73"
+      gradient_colors:
+        - "#F953C6"
+        - "#B91D73"
+
+login:
+  title: "Secure Portal"
+  subtitle: "Access your premium $formattedName workspace"
+  show_social_logins: true
+  allow_sign_up: true
+  logo_icon: "bolt"
+  allow_google_login: true
+  allow_apple_login: true
+  allow_forgot_password: true
+
+subscription:
+  title: "Accelerate Development"
+  subtitle: "Upgrade to one of our optimized plans for production-grade scale and performance."
+  currency: "INR"
+  show_checkout_button: true
+  plans:
+    - name: "Hobbyist"
+      price: 0
+      currency: "INR"
+      period: "free"
+      description: "Perfect for learning and building personal prototypes."
+      features:
+        - "1 Monorepo Workspace"
+        - "Basic Local Storage Providers"
+        - "Console Analytics Logging"
+        - "Community Support"
+      gradient_colors:
+        - "#8E2DE2"
+        - "#4A00E0"
+      is_popular: false
+    - name: "Pro Developer"
+      price: 899
+      currency: "INR"
+      period: "mo"
+      description: "Our most popular offering for serious production projects."
+      features:
+        - "Unlimited Monorepo Workspaces"
+        - "Supabase Backend Provisioning"
+        - "Stripe + Razorpay Payment Modules"
+        - "Full Sentry + PostHog Diagnostics"
+        - "Priority Support 24/7"
+      gradient_colors:
+        - "#6200EA"
+        - "#03DAC6"
+      is_popular: true
+    - name: "Enterprise Hub"
+      price: 3999
+      currency: "INR"
+      period: "mo"
+      description: "For teams requiring customized integrations, performance SLAs, and dedicated compute."
+      features:
+        - "Dedicated Premium Support Representative"
+        - "Custom Gateway Providers Integration"
+        - "SLA Guaranteed Database Clusters"
+        - "Tailored Workspace Integrations"
+        - "White-glove melos migrations"
+      gradient_colors:
+        - "#11998E"
+        - "#38EF7D"
+      is_popular: false
+
+profile:
+  title: "My Account"
+  premium_tier_name: "Pro Developer"
+  show_billing_history: true
+  show_preferences: true
+  show_support: true
+  help_center_url: "https://support.flutterforge.com"
+  allow_edit_profile: true
+  allow_logout: true
+''';
+
+    File(p.join(assetsDir.path, 'ui_config.yaml')).writeAsStringSync(yamlContent);
+  }
+
+  void _updatePubspecAssets(String dir) {
+    final file = File(p.join(dir, 'pubspec.yaml'));
+    if (!file.existsSync()) return;
+
+    var content = file.readAsStringSync();
+
+    // Check if assets/ui_config.yaml is already present
+    if (content.contains('assets/ui_config.yaml')) return;
+
+    // Find the 'flutter:' section
+    if (content.contains('flutter:')) {
+      final flutterIndex = content.indexOf('flutter:');
+      final nextLineIndex = content.indexOf('\n', flutterIndex);
+      if (nextLineIndex != -1) {
+        content = content.replaceRange(
+          nextLineIndex,
+          nextLineIndex,
+          '\n  assets:\n    - assets/ui_config.yaml',
+        );
+      }
+    } else {
+      content += '\nflutter:\n  assets:\n    - assets/ui_config.yaml\n';
+    }
+
+    file.writeAsStringSync(content);
   }
 
   void _updateGitignore(String dir) {

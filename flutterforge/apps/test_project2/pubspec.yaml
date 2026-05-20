@@ -45,6 +45,8 @@ dependencies:
     path: ../../packages/forge_analytics
   forge_state:
     path: ../../packages/forge_state
+  forge_ui:
+    path: ../../packages/forge_ui
 
 
 
@@ -70,6 +72,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/ui_config.yaml
 
   # To add assets to your application, add an assets section, like this:
   # assets:

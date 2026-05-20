@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forge_analytics/forge_analytics.dart';
 import 'package:forge_core/forge_core.dart';
-import 'package:forge_payments/src/interface/payment_gateway.dart';
+import 'package:forge_payments/forge_payments.dart';
 import 'package:forge_state/forge_state.dart';
 
 
@@ -12,6 +12,8 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final colors = Theme.of(context).colorScheme;
+    final sl = GetIt.instance;
+    final isPaymentsActive = sl.isRegistered<PaymentGateway>();
 
     return Scaffold(
       appBar: AppBar(
@@ -77,24 +79,30 @@ class HomeScreen extends ConsumerWidget {
             title: 'forge_backend',
             subtitle: 'Supabase • Auth + DB + Storage',
             color: Colors.blue,
+            isActive: true,
           ),
           _ModuleStatusTile(
             icon: Icons.payment_outlined,
             title: 'forge_payments',
-            subtitle: 'Razorpay • UPI + Cards + Wallets',
-            color: Colors.green,
+            subtitle: isPaymentsActive
+                ? 'Razorpay • UPI + Cards + Wallets'
+                : 'Payments Module Not Configured',
+            color: isPaymentsActive ? Colors.green : Colors.grey,
+            isActive: isPaymentsActive,
           ),
           _ModuleStatusTile(
             icon: Icons.analytics_outlined,
             title: 'forge_analytics',
             subtitle: 'Console (dev) • PostHog (prod)',
             color: Colors.orange,
+            isActive: true,
           ),
           _ModuleStatusTile(
             icon: Icons.storage_outlined,
             title: 'forge_state',
             subtitle: 'Riverpod + SecureStorage + Cache',
             color: Colors.purple,
+            isActive: true,
           ),
           const SizedBox(height: 24),
 
@@ -153,12 +161,14 @@ class _ModuleStatusTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
+  final bool isActive;
 
   const _ModuleStatusTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.color,
+    this.isActive = true,
   });
 
   @override
@@ -167,14 +177,17 @@ class _ModuleStatusTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(icon, color: color, size: 20),
         ),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
-        trailing: Icon(Icons.check_circle_rounded,
-            color: Colors.green.shade400, size: 20),
+        trailing: Icon(
+          isActive ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+          color: isActive ? Colors.green.shade400 : Colors.orange.shade400,
+          size: 20,
+        ),
       ),
     );
   }
@@ -190,6 +203,19 @@ class _PaymentDemoCardState extends State<_PaymentDemoCard> {
   final sl = GetIt.instance;
 
   Future<void> _makePayment() async {
+    final isConfigured = sl.isRegistered<PaymentGateway>();
+    if (!isConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Payments not configured. Enable payments module in forge.yaml to test checkout.',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     Analytics.track('payment_initiated', {
       'amount': 99900,
@@ -301,6 +327,7 @@ await orderResult.fold(
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final isConfigured = sl.isRegistered<PaymentGateway>();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -308,24 +335,39 @@ await orderResult.fold(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(children: [
-              Icon(Icons.currency_rupee, color: colors.primary),
+              Icon(Icons.currency_rupee, color: isConfigured ? colors.primary : colors.outline),
               const SizedBox(width: 8),
               Text('₹999 — Pro Plan',
-                  style: Theme.of(context).textTheme.titleMedium),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: isConfigured ? null : colors.outline,
+                  )),
             ]),
             const SizedBox(height: 8),
-            Text('UPI • Cards • NetBanking • Wallets',
+            Text(isConfigured ? 'UPI • Cards • NetBanking • Wallets' : 'Payments module is currently disabled.',
                 style: TextStyle(color: colors.outline, fontSize: 13)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: _isLoading ? null : _makePayment,
+              onPressed: _isLoading
+                  ? null
+                  : (isConfigured
+                      ? _makePayment
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Payments not configured. Enable payments module in forge.yaml to test this.',
+                              ),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                        }),
               icon: _isLoading
                   ? const SizedBox(
                       height: 16,
                       width: 16,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.payment_rounded),
-              label: const Text('Pay with Razorpay'),
+              label: Text(isConfigured ? 'Pay with Razorpay' : 'Payments Disabled'),
             ),
           ],
         ),
@@ -354,7 +396,7 @@ class _SubscriptionPromoBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.primary.withOpacity(0.3),
+            color: colors.primary.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -368,7 +410,7 @@ class _SubscriptionPromoBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -400,7 +442,7 @@ class _SubscriptionPromoBanner extends StatelessWidget {
           Text(
             'Swap backends, process payments instantly, and access priority modules with premium presets.',
             style: textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               height: 1.4,
             ),
           ),

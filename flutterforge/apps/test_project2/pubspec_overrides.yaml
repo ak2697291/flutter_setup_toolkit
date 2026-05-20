@@ -1,0 +1,14 @@
+# melos_managed_dependency_overrides: forge_analytics,forge_backend,forge_core,forge_payments,forge_state,forge_ui
+dependency_overrides:
+  forge_analytics:
+    path: ../../packages/forge_analytics
+  forge_backend:
+    path: ../../packages/forge_backend
+  forge_core:
+    path: ../../packages/forge_core
+  forge_payments:
+    path: ../../packages/forge_payments
+  forge_state:
+    path: ../../packages/forge_state
+  forge_ui:
+    path: ../../packages/forge_ui

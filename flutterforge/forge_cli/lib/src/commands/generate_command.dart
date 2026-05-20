@@ -58,9 +58,10 @@ class GenerateCommand extends Command<void> {
   void _generateMain(ForgeConfig config) {
     final sb = StringBuffer();
     sb.writeln("import 'package:flutter/material.dart';");
+    sb.writeln("import 'package:flutter/services.dart';");
     sb.writeln("import 'package:forge_core/forge_core.dart';");
     sb.writeln("import 'package:forge_state/forge_state.dart';");
-    sb.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
+    sb.writeln("import 'package:forge_ui/forge_ui.dart';");
 
     if (config.backend != null) {
       sb.writeln("import 'package:forge_backend/forge_backend.dart';");
@@ -93,6 +94,9 @@ class GenerateCommand extends Command<void> {
     }
     if (config.analytics?.providers.contains('posthog') == true) {
       sb.writeln("      'POSTHOG_API_KEY': const String.fromEnvironment('POSTHOG_API_KEY'),");
+    }
+    if (config.analytics?.providers.contains('mixpanel') == true) {
+      sb.writeln("      'MIXPANEL_TOKEN': const String.fromEnvironment('MIXPANEL_TOKEN'),");
     }
 
     sb.writeln('    },');
@@ -134,10 +138,31 @@ class GenerateCommand extends Command<void> {
           .join(', ');
       sb.writeln('    AnalyticsModule(');
       sb.writeln('      providers: [$providers],');
+      if (config.analytics!.providers.contains('posthog')) {
+        sb.writeln("      posthogApiKey: ForgeEnv.get('POSTHOG_API_KEY'),");
+        final posthogConfig = config.analytics!.providerConfigs['posthog'];
+        if (posthogConfig is Map && posthogConfig.containsKey('host')) {
+          final host = posthogConfig['host'];
+          sb.writeln("      posthogHost: '$host',");
+        }
+      }
+      if (config.analytics!.providers.contains('mixpanel')) {
+        sb.writeln("      mixpanelToken: ForgeEnv.get('MIXPANEL_TOKEN'),");
+      }
       sb.writeln('    ),');
     }
 
     sb.writeln('  ]);');
+    sb.writeln();
+    sb.writeln('  // Load and parse ui_config.yaml, then register in GetIt');
+    sb.writeln('  try {');
+    sb.writeln("    final yamlString = await rootBundle.loadString('assets/ui_config.yaml');");
+    sb.writeln('    final config = ForgeUIConfigLoader.parse(yamlString);');
+    sb.writeln('    GetIt.instance.registerSingleton<ForgeUIConfig>(config);');
+    sb.writeln('  } catch (e) {');
+    sb.writeln("    debugPrint('Failed to load ui_config.yaml: \$e. Using standard defaults.');");
+    sb.writeln('    GetIt.instance.registerSingleton<ForgeUIConfig>(ForgeUIConfig.fallback());');
+    sb.writeln('  }');
     sb.writeln();
     sb.writeln('  ForgeRouter.init(');
     sb.writeln('    routes: appRoutes,');
@@ -154,17 +179,16 @@ class GenerateCommand extends Command<void> {
     sb.writeln();
     sb.writeln('  @override');
     sb.writeln('  Widget build(BuildContext context) {');
+    sb.writeln('    final uiConfig = GetIt.instance<ForgeUIConfig>();');
+    sb.writeln("    final primaryColor = uiConfig.global.primaryColor ?? const Color(0xFF${config.app.primaryColor.replaceAll('#', '')});");
+    sb.writeln();
     sb.writeln('    return ForgeErrorBoundary(');
     sb.writeln('      child: ProviderScope(');
     sb.writeln('        child: MaterialApp.router(');
-    sb.writeln("          title: '${config.app.name}',");
+    sb.writeln('          title: uiConfig.global.appName,');
     sb.writeln('          debugShowCheckedModeBanner: false,');
-    sb.writeln('          theme: ForgeTheme.buildLight(');
-    sb.writeln("            primaryColor: const Color(0xFF${config.app.primaryColor.replaceAll('#', '')}),");
-    sb.writeln('          ),');
-    sb.writeln('          darkTheme: ForgeTheme.buildDark(');
-    sb.writeln("            primaryColor: const Color(0xFF${config.app.primaryColor.replaceAll('#', '')}),");
-    sb.writeln('          ),');
+    sb.writeln('          theme: ForgeTheme.buildLight(primaryColor: primaryColor),');
+    sb.writeln('          darkTheme: ForgeTheme.buildDark(primaryColor: primaryColor),');
     sb.writeln('          themeMode: ThemeMode.system,');
     sb.writeln('          routerConfig: ForgeRouter.router,');
     sb.writeln('        ),');
@@ -178,6 +202,12 @@ class GenerateCommand extends Command<void> {
   }
 
   void _generateRoutes(ForgeConfig config) {
+    final file = File(p.join('lib', 'routes.dart'));
+    if (file.existsSync()) {
+      print('   • lib/routes.dart already exists. Skipping recreation to preserve your custom routes.');
+      return;
+    }
+
     final content = '''import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
@@ -205,7 +235,7 @@ final List<RouteBase> appRoutes = [
 ];
 ''';
 
-    File(p.join('lib', 'routes.dart')).writeAsStringSync(content);
+    file.writeAsStringSync(content);
   }
 
   String _className(String name) =>

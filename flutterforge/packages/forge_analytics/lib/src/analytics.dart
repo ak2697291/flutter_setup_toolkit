@@ -18,6 +18,7 @@ class Analytics {
 
   /// Register analytics providers. Called by [AnalyticsModule].
   static void init(List<AnalyticsProvider> providers) {
+    _providers.clear();
     _providers.addAll(providers);
     _initialized = true;
     _log.d('Analytics initialized with ${providers.length} provider(s): '
@@ -81,7 +82,10 @@ class Analytics {
   }
 
   static void _assertInitialized() {
-    assert(_initialized, 'Analytics not initialized. Add AnalyticsModule to initServiceLocator().');
+    if (!_initialized) {
+      _log.w('Analytics not initialized. Initializing fallback ConsoleAnalyticsProvider.');
+      init([ConsoleAnalyticsProvider()]);
+    }
   }
 }
 
