@@ -1,0 +1,27 @@
+name: forge_ui
+description: Premium plug-and-play UI screens for FlutterForge (Subscription, Auth, Profile, Onboarding).
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  forge_core:
+    path: ../forge_core
+  forge_analytics:
+    path: ../forge_analytics
+  forge_payments:
+    path: ../forge_payments
+  forge_state:
+    path: ../forge_state
+  forge_backend:
+    path: ../forge_backend
+  yaml: ^3.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

@@ -1,0 +1,6 @@
+# melos_managed_dependency_overrides: forge_backend,forge_core
+dependency_overrides:
+  forge_backend:
+    path: ../forge_backend
+  forge_core:
+    path: ../forge_core

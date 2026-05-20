@@ -5,8 +5,6 @@ import '../interface/payment_gateway.dart';
 import '../razorpay/razorpay_gateway.dart';
 import '../stripe/stripe_gateway.dart';
 
-enum PaymentProvider { razorpay, stripe, iap }
-
 /// PaymentsModule — registers the chosen payment gateway(s) with the DI container.
 ///
 /// In main.dart:
