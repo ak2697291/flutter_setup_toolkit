@@ -1,5 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../rbac/forge_role.dart';
+
+/// ForgeRoleGuard — helper to handle role-based redirection.
+class ForgeRoleGuard {
+  /// Returns null if access is allowed, otherwise returns the [redirectLocation].
+  static String? redirect({
+    required ForgeRole? currentRole,
+    required List<ForgeRole> allowedRoles,
+    String redirectLocation = '/',
+  }) {
+    if (currentRole == null || !allowedRoles.contains(currentRole)) {
+      return redirectLocation;
+    }
+    return null;
+  }
+}
 
 /// ForgeRouter — wraps go_router with sensible defaults and auth guard support.
 class ForgeRouter {
