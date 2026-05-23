@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:args/command_runner.dart';
+import '../config/forge_config.dart';
 
 class DoctorCommand extends Command<void> {
   @override
@@ -46,13 +47,34 @@ class DoctorCommand extends Command<void> {
     ));
 
     // forge.yaml
-    final forgeYaml = File('forge.yaml');
+    final forgeYamlFile = File('forge.yaml');
+    final forgeYamlExists = forgeYamlFile.existsSync();
+    String forgeYamlDetail = 'Not found — run forge create <app_name> or create forge.yaml manually';
+    bool forgeYamlPassed = forgeYamlExists;
+
+    if (forgeYamlExists) {
+      try {
+        final config = ForgeConfig.load();
+        final errors = config.validate();
+        if (errors.isEmpty) {
+          forgeYamlDetail = 'Found and valid ✅';
+          if (config.app.developerName == null || config.app.contactNumber == null) {
+            forgeYamlDetail += ' (Warning: developer_name or contact_number missing)';
+          }
+        } else {
+          forgeYamlDetail = 'Found but has errors: ${errors.first}';
+          forgeYamlPassed = false;
+        }
+      } catch (e) {
+        forgeYamlDetail = 'Error parsing forge.yaml: $e';
+        forgeYamlPassed = false;
+      }
+    }
+
     checks.add(_Check(
       name: 'forge.yaml',
-      passed: forgeYaml.existsSync(),
-      detail: forgeYaml.existsSync()
-          ? 'Found at ${forgeYaml.absolute.path}'
-          : 'Not found — run forge create <app_name> or create forge.yaml manually',
+      passed: forgeYamlPassed,
+      detail: forgeYamlDetail,
     ));
 
     // .env files

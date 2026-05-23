@@ -9,6 +9,8 @@ export 'src/env/forge_env.dart';
 export 'src/error/forge_error.dart';
 export 'src/error/forge_error_boundary.dart';
 export 'src/utils/forge_logger.dart';
+export 'src/rbac/forge_role.dart';
+export 'src/rbac/rbac_gate.dart';
 export 'package:get_it/get_it.dart';
 export 'package:go_router/go_router.dart';
 export 'package:flutter_riverpod/flutter_riverpod.dart';

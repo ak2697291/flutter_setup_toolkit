@@ -30,7 +30,7 @@ void main() async {
       supabaseAnonKey: ForgeEnv.get('SUPABASE_ANON_KEY'),
     ),
     AnalyticsModule(
-      providers: [AnalyticsProviderType.posthog, AnalyticsProviderType.firebase],
+      providers: [AnalyticsProviderType.posthog],
       posthogApiKey: ForgeEnv.get('POSTHOG_API_KEY'),
     ),
     PaymentsModule(

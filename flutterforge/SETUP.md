@@ -20,8 +20,10 @@ This guide walks you through every step to get FlutterForge running, from zero t
 12. [Running the App](#12-running-the-app)
 13. [Production Checklist](#13-production-checklist)
 14. [Monorepo Commands](#14-monorepo-commands)
-15. [Project Structure](#15-project-structure)
-16. [Troubleshooting](#16-troubleshooting)
+15. [Role-Based Access Control (RBAC)](#15-role-based-access-control-rbac)
+16. [CLI Advanced Usage](#16-cli-advanced-usage)
+17. [Project Structure](#17-project-structure)
+18. [Troubleshooting](#18-troubleshooting)
 
 ---
 
@@ -703,7 +705,59 @@ flutter test
 
 ---
 
-## 15. Project Structure
+## 15. Role-Based Access Control (RBAC)
+
+FlutterForge includes a lightweight RBAC system built into `forge_core`.
+
+### ForgeRole
+Define your roles as `ForgeRole` objects. Default roles are `admin`, `user`, and `guest`.
+```dart
+final role = ForgeRole.admin;
+```
+
+### UI-Level Protection: RBACGate
+Wrap widgets that should only be visible to specific roles:
+```dart
+RBACGate(
+  currentRole: user?.role,
+  allowedRoles: const [ForgeRole.admin],
+  child: AdminDashboard(),
+)
+```
+
+### Route-Level Protection: ForgeRoleGuard
+Use the guard in your `go_router` redirect logic:
+```dart
+GoRoute(
+  path: '/admin',
+  redirect: (context, state) => ForgeRoleGuard.redirect(
+    currentRole: currentUser?.role,
+    allowedRoles: const [ForgeRole.admin],
+    redirectLocation: '/',
+  ),
+)
+```
+
+---
+
+## 16. CLI Advanced Usage
+
+The `forge` CLI is your companion for maintaining FlutterForge projects.
+
+### `forge doctor`
+Run this to verify your environment meets all requirements (Flutter, Melos, CocoaPods, etc.) and that your `forge.yaml` is valid.
+
+### `forge generate`
+Regenerates `lib/main.dart` based on your `forge.yaml`. Use this when you swap backends, add payment providers, or change analytics config. It also creates a template `lib/routes.dart` if it doesn't exist.
+
+### `forge create <app_name> --preset <preset>`
+Scaffolds a new project. 
+- **Presets**: `saas`, `marketplace`, `ecommerce`, `blank`.
+- **Backend**: `--backend supabase` or `--backend firebase`.
+
+---
+
+## 17. Project Structure
 
 ```
 flutterforge/
@@ -764,7 +818,7 @@ flutterforge/
 
 ---
 
-## 16. Troubleshooting
+## 18. Troubleshooting
 
 ### `SUPABASE_URL` is empty at runtime
 Make sure you run with `--dart-define-from-file`:

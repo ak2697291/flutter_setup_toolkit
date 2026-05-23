@@ -49,6 +49,7 @@ class SupabaseBackendService implements BackendService {
         data: {
           if (name != null) 'display_name': name,
           if (contactNumber != null) 'contact_number': contactNumber,
+          'role': ForgeRole.user.value,
         },
       );
       if (res.user == null) {
@@ -135,8 +136,29 @@ class SupabaseBackendService implements BackendService {
     }
   }
 
- @override
-Future<Either<ForgeFailure, Unit>> signOut() async {
+  @override
+  Future<Either<ForgeFailure, AuthUserDetails>> updateCurrentUser({
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final res = await _client.auth.updateUser(
+        UserAttributes(
+          data: metadata,
+        ),
+      );
+      if (res.user == null) {
+        return Left(ForgeFailure.auth('Update user failed'));
+      }
+      return Right(_mapUser(res.user!));
+    } on AuthException catch (e) {
+      return Left(ForgeFailure.auth(e.message, code: e.statusCode));
+    } catch (e) {
+      return Left(ForgeFailure.unknown(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<ForgeFailure, Unit>> signOut() async {
   try {
     // Google Sign Out
     await _googleSignIn.signOut();
@@ -322,5 +344,6 @@ Stream<List<Map<String, dynamic>>> watchCollection({
         contactNumber: user.userMetadata?['contact_number'] as String?,
         photoUrl: user.userMetadata?['avatar_url'] as String?, // FIX: was avatarUrl
         emailVerified: user.emailConfirmedAt != null,           // FIX: was missing
+        role: ForgeRole(user.userMetadata?['role'] as String? ?? ForgeRole.user.value),
       );
 }

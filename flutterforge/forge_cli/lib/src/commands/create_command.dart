@@ -25,6 +25,10 @@ class CreateCommand extends Command<void> {
           help: 'Include forge_payments', defaultsTo: false)
       ..addFlag('analytics',
           help: 'Include forge_analytics', defaultsTo: true)
+      ..addOption('developer-name',
+          help: 'Developer name for the project')
+      ..addOption('contact',
+          help: 'Contact number for the project')
       ..addFlag('no-git',
           help: 'Skip git initialization', defaultsTo: false);
   }
@@ -41,6 +45,8 @@ class CreateCommand extends Command<void> {
     final backend = argResults!['backend'] as String;
     final includePayments = argResults!['payments'] as bool;
     final includeAnalytics = argResults!['analytics'] as bool;
+    final developerName = argResults!['developer-name'] as String?;
+    final contactNumber = argResults!['contact'] as String?;
     final skipGit = argResults!['no-git'] as bool;
 
     print('\n⚡ FlutterForge — Creating "$appName" ($preset preset)\n');
@@ -64,7 +70,9 @@ class CreateCommand extends Command<void> {
     print('📝 Writing forge.yaml...');
     _writeForgeYaml(projectDir.path, appName, backend,
         includePayments: includePayments,
-        includeAnalytics: includeAnalytics);
+        includeAnalytics: includeAnalytics,
+        developerName: developerName,
+        contactNumber: contactNumber);
 
     // 3. Write .env files
     print('🔐 Writing .env template files...');
@@ -120,6 +128,8 @@ Next steps:
     String backend, {
     required bool includePayments,
     required bool includeAnalytics,
+    String? developerName,
+    String? contactNumber,
   }) {
     final bundleId = 'com.example.${appName.replaceAll('_', '')}';
     final content = StringBuffer('''
@@ -128,7 +138,16 @@ app:
   bundle_id: $bundleId
   platforms: [ios, android, web]
   primary_color: '#6200EA'
+''');
 
+    if (developerName != null) {
+      content.writeln("  developer_name: $developerName");
+    }
+    if (contactNumber != null) {
+      content.writeln("  contact_number: $contactNumber");
+    }
+
+    content.writeln('''
 backend:
   provider: $backend
 ''');
@@ -167,6 +186,10 @@ backend:
     content.writeln('''state:
   manager: riverpod
   local_db: isar
+
+rbac:
+  roles: [admin, user, guest]
+  default_role: user
 ''');
 
     File(p.join(dir, 'forge.yaml')).writeAsStringSync(content.toString());

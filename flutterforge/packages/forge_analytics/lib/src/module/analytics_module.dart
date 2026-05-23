@@ -1,6 +1,6 @@
 import 'package:forge_core/forge_core.dart';
-import 'package:get_it/get_it.dart';
 import 'package:forge_core/src/forge_module.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 import '../analytics.dart';
 
 enum AnalyticsProviderType { posthog, firebase, mixpanel, console }
@@ -63,10 +63,32 @@ class AnalyticsModule implements ForgeModule {
   }
 
   Future<dynamic> _initPostHog(String apiKey, String? host) async {
-    // import 'package:posthog_flutter/posthog_flutter.dart';
-    // await Posthog().setup(apiKey, host: host ?? 'https://app.posthog.com');
-    // return Posthog();
-    throw UnimplementedError('Uncomment posthog_flutter import');
+    try {
+      final posthog = Posthog();
+      final config = PostHogConfig(apiKey);
+      if (host != null && host.isNotEmpty) {
+        config.host = host;
+      }
+      bool isDevMode = false;
+      try {
+        isDevMode = ForgeEnv.isDev || ForgeEnv.isStaging;
+      } catch (_) {
+        isDevMode = true;
+      }
+      if (isDevMode) {
+        config.debug = true;
+        // Flush immediately in dev/staging so every event is sent at once
+        // instead of waiting for the default batch of 20.
+        config.flushAt = 1;
+      }
+      await posthog.setup(config);
+
+      return posthog;
+    } catch (e, stackTrace) {
+      throw Exception(
+        'Failed to initialize PostHog: $e\n$stackTrace',
+      );
+    }
   }
 
   Future<dynamic> _initFirebaseAnalytics() async {

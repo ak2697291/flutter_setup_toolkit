@@ -14,6 +14,7 @@ abstract class BackendService {
   });
   Future<Either<ForgeFailure, AuthUserDetails>> signInWithGoogle();
   Future<Either<ForgeFailure, AuthUserDetails>> signInWithApple();
+  Future<Either<ForgeFailure, AuthUserDetails>> updateCurrentUser({Map<String, dynamic>? metadata});
   Future<Either<ForgeFailure, Unit>> signOut();
   Stream<AuthUserDetails?> get authStateChanges;
   AuthUserDetails? get currentUser;
@@ -39,6 +40,8 @@ class AuthUserDetails {
   final String? contactNumber;
   final String? photoUrl;
   final bool emailVerified;
+  final ForgeRole role;
+
   const AuthUserDetails({
     required this.id,
     this.email,
@@ -46,5 +49,6 @@ class AuthUserDetails {
     this.contactNumber,
     this.photoUrl,
     this.emailVerified = false,
+    this.role = ForgeRole.user,
   });
 }

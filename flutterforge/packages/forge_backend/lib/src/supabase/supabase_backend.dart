@@ -40,6 +40,7 @@ class SupabaseBackend implements BackendService {
         data: {
           if (name != null) 'full_name': name,
           if (contactNumber != null) 'contact_number': contactNumber,
+          'role': ForgeRole.user.value,
         },
       );
       return Right(_mapUser(res.user!));
@@ -69,6 +70,27 @@ class SupabaseBackend implements BackendService {
       final user = _client.auth.currentUser;
       if (user == null) return Left(const AuthFailure(message: 'Apple sign-in failed'));
       return Right(_mapUser(user));
+    } catch (e) {
+      return Left(UnknownFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<ForgeFailure, AuthUserDetails>> updateCurrentUser({
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final res = await _client.auth.updateUser(
+        UserAttributes(
+          data: metadata,
+        ),
+      );
+      if (res.user == null) {
+        return Left(const AuthFailure(message: 'Update user failed'));
+      }
+      return Right(_mapUser(res.user!));
+    } on AuthException catch (e) {
+      return Left(AuthFailure(message: e.message, code: e.statusCode));
     } catch (e) {
       return Left(UnknownFailure(message: e.toString()));
     }
@@ -176,6 +198,7 @@ class SupabaseBackend implements BackendService {
     contactNumber: user.userMetadata?['contact_number'] as String?,
     photoUrl: user.userMetadata?['avatar_url'] as String?,
     emailVerified: user.emailConfirmedAt != null,
+    role: ForgeRole(user.userMetadata?['role'] as String? ?? ForgeRole.user.value),
   );
 }
 

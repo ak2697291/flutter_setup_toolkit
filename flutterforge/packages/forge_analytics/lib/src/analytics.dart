@@ -1,12 +1,26 @@
 import 'package:logger/logger.dart';
 
 /// Analytics — the single entry point for all analytics tracking.
-/// Events are fan-out to all configured providers automatically.
 ///
-/// Usage anywhere in your app:
+/// Events are automatically forwarded to all registered providers.
+///
+/// Example:
 /// ```dart
-/// Analytics.track('button_tapped', {'screen': 'home', 'button': 'signup'});
-/// Analytics.identify(userId: user.id, properties: {'plan': 'pro'});
+/// Analytics.track(
+///   'button_clicked',
+///   {
+///     'screen': 'home',
+///     'button': 'signup',
+///   },
+/// );
+///
+/// Analytics.identify(
+///   userId: '123',
+///   properties: {
+///     'plan': 'pro',
+///   },
+/// );
+///
 /// Analytics.screen('HomeScreen');
 /// ```
 class Analytics {
@@ -14,94 +28,151 @@ class Analytics {
 
   static final List<AnalyticsProvider> _providers = [];
   static final Logger _log = Logger();
+
   static bool _initialized = false;
 
-  /// Register analytics providers. Called by [AnalyticsModule].
+  /// Initialize analytics providers.
+  ///
+  /// Called automatically by AnalyticsModule.
   static void init(List<AnalyticsProvider> providers) {
-    _providers.clear();
-    _providers.addAll(providers);
+    _providers
+      ..clear()
+      ..addAll(providers);
+
     _initialized = true;
-    _log.d('Analytics initialized with ${providers.length} provider(s): '
-        '${providers.map((p) => p.name).join(', ')}');
+
+    _log.d(
+      'Analytics initialized with ${providers.length} provider(s): '
+      '${providers.map((e) => e.name).join(', ')}',
+    );
   }
 
-  /// Track a custom event.
+  /// Track analytics event.
   static Future<void> track(
     String event, [
     Map<String, dynamic>? properties,
   ]) async {
     _assertInitialized();
-    _log.d('ANALYTICS: $event ${properties ?? {}}');
+
+    final safeProps = properties ?? {};
+
+    _log.d('ANALYTICS EVENT → $event | $safeProps');
+
     for (final provider in _providers) {
       try {
-        await provider.track(event, properties ?? {});
-      } catch (e) {
-        _log.w('Analytics provider ${provider.name} failed for event $event: $e');
+        await provider.track(event, safeProps);
+      } catch (e, stackTrace) {
+        _log.w(
+          'Analytics provider ${provider.name} failed for event '
+          '$event: $e\n$stackTrace',
+        );
       }
     }
   }
 
-  /// Identify the current user. Call after login.
+  /// Identify logged in user.
   static Future<void> identify({
     required String userId,
     Map<String, dynamic>? properties,
   }) async {
     _assertInitialized();
-    _log.d('ANALYTICS IDENTIFY: $userId');
+
+    final safeProps = properties ?? {};
+
+    _log.d('ANALYTICS IDENTIFY → $userId');
+
     for (final provider in _providers) {
       try {
-        await provider.identify(userId, properties ?? {});
-      } catch (e) {
-        _log.w('Analytics identify failed for ${provider.name}: $e');
+        await provider.identify(userId, safeProps);
+      } catch (e, stackTrace) {
+        _log.w(
+          'Analytics identify failed for ${provider.name}: '
+          '$e\n$stackTrace',
+        );
       }
     }
   }
 
-  /// Track a screen view.
-  static Future<void> screen(String screenName, [Map<String, dynamic>? properties]) async {
+  /// Track screen navigation.
+  static Future<void> screen(
+    String screenName, [
+    Map<String, dynamic>? properties,
+  ]) async {
     _assertInitialized();
-    _log.d('ANALYTICS SCREEN: $screenName');
+
+    final safeProps = properties ?? {};
+
+    _log.d('ANALYTICS SCREEN → $screenName');
+
     for (final provider in _providers) {
       try {
-        await provider.screen(screenName, properties ?? {});
-      } catch (e) {
-        _log.w('Analytics screen failed for ${provider.name}: $e');
+        await provider.screen(screenName, safeProps);
+      } catch (e, stackTrace) {
+        _log.w(
+          'Analytics screen failed for ${provider.name}: '
+          '$e\n$stackTrace',
+        );
       }
     }
   }
 
-  /// Reset analytics state. Call on logout.
+  /// Reset analytics session.
+  ///
+  /// Useful on logout.
   static Future<void> reset() async {
     for (final provider in _providers) {
       try {
         await provider.reset();
-      } catch (e) {
-        _log.w('Analytics reset failed for ${provider.name}: $e');
+      } catch (e, stackTrace) {
+        _log.w(
+          'Analytics reset failed for ${provider.name}: '
+          '$e\n$stackTrace',
+        );
       }
     }
   }
 
   static void _assertInitialized() {
-    if (!_initialized) {
-      _log.w('Analytics not initialized. Initializing fallback ConsoleAnalyticsProvider.');
-      init([ConsoleAnalyticsProvider()]);
-    }
+    if (_initialized) return;
+
+    _log.w(
+      'Analytics not initialized. '
+      'Falling back to ConsoleAnalyticsProvider.',
+    );
+
+    init([
+      ConsoleAnalyticsProvider(),
+    ]);
   }
 }
 
-/// Base class for analytics providers.
+/// Base analytics provider contract.
 abstract class AnalyticsProvider {
   String get name;
-  Future<void> track(String event, Map<String, dynamic> properties);
-  Future<void> identify(String userId, Map<String, dynamic> properties);
-  Future<void> screen(String screenName, Map<String, dynamic> properties);
+
+  Future<void> track(
+    String event,
+    Map<String, dynamic> properties,
+  );
+
+  Future<void> identify(
+    String userId,
+    Map<String, dynamic> properties,
+  );
+
+  Future<void> screen(
+    String screenName,
+    Map<String, dynamic> properties,
+  );
+
   Future<void> reset();
 }
 
-// ─── PostHog Provider ────────────────────────────────────────────────────────
+/// ─────────────────────────────────────────────────────────
+/// PostHog Provider
+/// ─────────────────────────────────────────────────────────
 
 class PostHogAnalyticsProvider implements AnalyticsProvider {
-  // Using dynamic import to avoid compile errors if posthog_flutter is not added
   final dynamic _posthog;
 
   PostHogAnalyticsProvider(this._posthog);
@@ -109,19 +180,56 @@ class PostHogAnalyticsProvider implements AnalyticsProvider {
   @override
   String get name => 'PostHog';
 
-  @override
-  Future<void> track(String event, Map<String, dynamic> properties) async {
-    await _posthog.capture(eventName: event, properties: properties);
+  /// Converts dynamic map into PostHog-compatible map.
+ Map<String, Object> _sanitize(
+    Map<String, dynamic> properties,
+  ) {
+    return properties.map(
+      (key, value) {
+        if (value == null) {
+          return MapEntry(key, '');
+        }
+
+        if (value is Object) {
+          return MapEntry(key, value);
+        }
+
+        return MapEntry(key, value.toString());
+      },
+    );
   }
 
   @override
-  Future<void> identify(String userId, Map<String, dynamic> properties) async {
-    await _posthog.identify(distinctId: userId, userProperties: properties);
+  Future<void> track(
+    String event,
+    Map<String, dynamic> properties,
+  ) async {
+    await _posthog.capture(
+      eventName: event,
+      properties: _sanitize(properties),
+    );
   }
 
   @override
-  Future<void> screen(String screenName, Map<String, dynamic> properties) async {
-    await _posthog.screen(screenName: screenName, properties: properties);
+  Future<void> identify(
+    String userId,
+    Map<String, dynamic> properties,
+  ) async {
+    await _posthog.identify(
+      userId: userId,
+      userProperties: _sanitize(properties),
+    );
+  }
+
+  @override
+  Future<void> screen(
+    String screenName,
+    Map<String, dynamic> properties,
+  ) async {
+    await _posthog.screen(
+      screenName: screenName,
+      properties: _sanitize(properties),
+    );
   }
 
   @override
@@ -130,7 +238,9 @@ class PostHogAnalyticsProvider implements AnalyticsProvider {
   }
 }
 
-// ─── Firebase Analytics Provider ─────────────────────────────────────────────
+/// ─────────────────────────────────────────────────────────
+/// Firebase Analytics Provider
+/// ─────────────────────────────────────────────────────────
 
 class FirebaseAnalyticsProvider implements AnalyticsProvider {
   final dynamic _analytics;
@@ -141,24 +251,51 @@ class FirebaseAnalyticsProvider implements AnalyticsProvider {
   String get name => 'Firebase Analytics';
 
   @override
-  Future<void> track(String event, Map<String, dynamic> properties) async {
+  Future<void> track(
+    String event,
+    Map<String, dynamic> properties,
+  ) async {
+    final sanitizedEvent = event
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_')
+        .substring(
+          0,
+          event.length > 40 ? 40 : event.length,
+        );
+
     await _analytics.logEvent(
-      name: event.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_').substring(0, 40),
-      parameters: properties.map((k, v) => MapEntry(k, v.toString())),
+      name: sanitizedEvent,
+      parameters: properties.map(
+        (key, value) => MapEntry(
+          key,
+          value?.toString(),
+        ),
+      ),
     );
   }
 
   @override
-  Future<void> identify(String userId, Map<String, dynamic> properties) async {
+  Future<void> identify(
+    String userId,
+    Map<String, dynamic> properties,
+  ) async {
     await _analytics.setUserId(id: userId);
+
     for (final entry in properties.entries) {
-      await _analytics.setUserProperty(name: entry.key, value: entry.value.toString());
+      await _analytics.setUserProperty(
+        name: entry.key,
+        value: entry.value?.toString(),
+      );
     }
   }
 
   @override
-  Future<void> screen(String screenName, Map<String, dynamic> properties) async {
-    await _analytics.logScreenView(screenName: screenName);
+  Future<void> screen(
+    String screenName,
+    Map<String, dynamic> properties,
+  ) async {
+    await _analytics.logScreenView(
+      screenName: screenName,
+    );
   }
 
   @override
@@ -167,8 +304,11 @@ class FirebaseAnalyticsProvider implements AnalyticsProvider {
   }
 }
 
-// ─── Console provider (dev only) ──────────────────────────────────────────────
-
+/// ─────────────────────────────────────────────────────────
+/// Console Analytics Provider
+/// ─────────────────────────────────────────────────────────
+///
+/// Useful for local development/debugging.
 class ConsoleAnalyticsProvider implements AnalyticsProvider {
   final Logger _log = Logger();
 
@@ -176,22 +316,37 @@ class ConsoleAnalyticsProvider implements AnalyticsProvider {
   String get name => 'Console';
 
   @override
-  Future<void> track(String event, Map<String, dynamic> properties) async {
-    _log.d('[Analytics] $event | $properties');
+  Future<void> track(
+    String event,
+    Map<String, dynamic> properties,
+  ) async {
+    _log.d(
+      '[Analytics] EVENT → $event | $properties',
+    );
   }
 
   @override
-  Future<void> identify(String userId, Map<String, dynamic> properties) async {
-    _log.d('[Analytics] identify: $userId | $properties');
+  Future<void> identify(
+    String userId,
+    Map<String, dynamic> properties,
+  ) async {
+    _log.d(
+      '[Analytics] IDENTIFY → $userId | $properties',
+    );
   }
 
   @override
-  Future<void> screen(String screenName, Map<String, dynamic> properties) async {
-    _log.d('[Analytics] screen: $screenName');
+  Future<void> screen(
+    String screenName,
+    Map<String, dynamic> properties,
+  ) async {
+    _log.d(
+      '[Analytics] SCREEN → $screenName | $properties',
+    );
   }
 
   @override
   Future<void> reset() async {
-    _log.d('[Analytics] reset');
+    _log.d('[Analytics] RESET');
   }
 }

@@ -47,6 +47,7 @@ class ForgeConfig {
   final AnalyticsConfig? analytics;
   final MonitoringConfig? monitoring;
   final StateConfig? state;
+  final RbacConfig? rbac;
 
   ForgeConfig({
     required this.app,
@@ -55,6 +56,7 @@ class ForgeConfig {
     this.analytics,
     this.monitoring,
     this.state,
+    this.rbac,
   });
 
   /// Load and parse forge.yaml from the given directory.
@@ -92,6 +94,9 @@ class ForgeConfig {
       state: yaml.containsKey('state')
           ? StateConfig._fromYaml(yaml['state'] as YamlMap)
           : null,
+      rbac: yaml.containsKey('rbac')
+          ? RbacConfig._fromYaml(yaml['rbac'] as YamlMap)
+          : null,
     );
   }
 
@@ -116,6 +121,15 @@ class ForgeConfig {
       }
     }
 
+    if (rbac != null) {
+      if (rbac!.roles.isEmpty) {
+        errors.add('rbac.roles cannot be empty if rbac section is present');
+      }
+      if (rbac!.defaultRole != null && !rbac!.roles.contains(rbac!.defaultRole)) {
+        errors.add('rbac.default_role "${rbac!.defaultRole}" must be one of the defined roles: ${rbac!.roles}');
+      }
+    }
+
     return errors;
   }
 }
@@ -126,6 +140,8 @@ class AppConfig {
   final List<String> platforms;
   final String primaryColor;
   final String fontFamily;
+  final String? developerName;
+  final String? contactNumber;
 
   AppConfig({
     required this.name,
@@ -133,6 +149,8 @@ class AppConfig {
     required this.platforms,
     this.primaryColor = '#6200EA',
     this.fontFamily = 'Roboto',
+    this.developerName,
+    this.contactNumber,
   });
 
   factory AppConfig._fromYaml(YamlMap yaml) => AppConfig(
@@ -144,6 +162,8 @@ class AppConfig {
             ['ios', 'android'],
         primaryColor: (yaml['primary_color'] as String?) ?? '#6200EA',
         fontFamily: (yaml['font_family'] as String?) ?? 'Roboto',
+        developerName: yaml['developer_name'] as String?,
+        contactNumber: yaml['contact_number'] as String?,
       );
 }
 
@@ -258,6 +278,18 @@ class StateConfig {
   factory StateConfig._fromYaml(YamlMap yaml) => StateConfig(
         manager: yaml['manager'] as String? ?? 'riverpod',
         localDb: yaml['local_db'] as String?,
+      );
+}
+
+class RbacConfig {
+  final List<String> roles;
+  final String? defaultRole;
+
+  RbacConfig({required this.roles, this.defaultRole});
+
+  factory RbacConfig._fromYaml(YamlMap yaml) => RbacConfig(
+        roles: (yaml['roles'] as YamlList).map((e) => e.toString()).toList(),
+        defaultRole: yaml['default_role'] as String?,
       );
 }
 

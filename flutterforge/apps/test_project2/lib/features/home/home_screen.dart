@@ -15,6 +15,14 @@ class HomeScreen extends ConsumerWidget {
     final sl = GetIt.instance;
     final isPaymentsActive = sl.isRegistered<PaymentGateway>();
 
+    // Log admin view if user is admin
+    if (user?.role == ForgeRole.admin) {
+      Analytics.track('admin_section_rendered', {
+        'user_id': user?.id,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('FlutterForge Demo'),
@@ -98,13 +106,54 @@ class HomeScreen extends ConsumerWidget {
             isActive: true,
           ),
           _ModuleStatusTile(
-            icon: Icons.storage_outlined,
+            icon: Icons.layers_outlined,
             title: 'forge_state',
-            subtitle: 'Riverpod + SecureStorage + Cache',
+            subtitle: 'Riverpod • Isar • SecureStorage',
             color: Colors.purple,
             isActive: true,
           ),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 32),
+
+          // Admin Section (Protected by RBAC)
+          RBACGate(
+            currentRole: user?.role,
+            allowedRoles: const [ForgeRole.admin],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Admin Panel',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.redAccent,
+                        )),
+                const SizedBox(height: 12),
+                Card(
+                  color: Colors.red.withOpacity(0.05),
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.red.withOpacity(0.2)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.admin_panel_settings, color: Colors.red),
+                    title: const Text('View User Management'),
+                    subtitle: const Text('Only visible to administrators'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Analytics.track('admin_management_tapped', {
+                        'user_id': user?.id,
+                        'timestamp': DateTime.now().toIso8601String(),
+                      });
+                      context.go('/admin');
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
 
           // Payment demo
           Text('Payment Demo',

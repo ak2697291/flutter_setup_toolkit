@@ -10,7 +10,7 @@ dependencies:
     sdk: flutter
   forge_core:
     path: ../forge_core
-  # posthog_flutter: ^4.0.1
+  posthog_flutter: ^5.24.2
   # mixpanel_flutter: ^2.3.0
   # firebase_analytics: ^10.8.0
 dev_dependencies:
