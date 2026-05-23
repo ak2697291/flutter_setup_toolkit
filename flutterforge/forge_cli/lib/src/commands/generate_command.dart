@@ -44,6 +44,12 @@ class GenerateCommand extends Command<void> {
     print('🔧 Generating lib/routes.dart...');
     _generateRoutes(config);
 
+    // Generate rbac_config.dart
+    if (config.rbac != null) {
+      print('🔧 Generating lib/rbac_config.dart...');
+      _generateRbac(config);
+    }
+
     // Remind to run build_runner if needed
     if (config.state?.localDb == 'isar') {
       print('\n💡 Run build_runner to generate Isar schemas:');
@@ -97,6 +103,13 @@ class GenerateCommand extends Command<void> {
     }
     if (config.analytics?.providers.contains('mixpanel') == true) {
       sb.writeln("      'MIXPANEL_TOKEN': const String.fromEnvironment('MIXPANEL_TOKEN'),");
+    }
+
+    if (config.app.developerName != null) {
+      sb.writeln("      'DEVELOPER_NAME': '${config.app.developerName}',");
+    }
+    if (config.app.contactNumber != null) {
+      sb.writeln("      'CONTACT_NUMBER': '${config.app.contactNumber}',");
     }
 
     sb.writeln('    },');
@@ -236,6 +249,28 @@ final List<RouteBase> appRoutes = [
 ''';
 
     file.writeAsStringSync(content);
+  }
+
+  void _generateRbac(ForgeConfig config) {
+    if (config.rbac == null) return;
+
+    final sb = StringBuffer();
+    sb.writeln("import 'package:forge_core/forge_core.dart';");
+    sb.writeln();
+    sb.writeln("/// App roles defined in forge.yaml");
+    sb.writeln("class AppRoles {");
+
+    for (final role in config.rbac!.roles) {
+      sb.writeln("  static const $role = ForgeRole('$role');");
+    }
+
+    sb.writeln();
+    final defaultRole = config.rbac!.defaultRole ?? config.rbac!.roles.first;
+    sb.writeln("  static const defaultRole = $defaultRole;");
+    sb.writeln("}");
+
+    final file = File(p.join('lib', 'rbac_config.dart'));
+    file.writeAsStringSync(sb.toString());
   }
 
   String _className(String name) =>

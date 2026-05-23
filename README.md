@@ -14,12 +14,18 @@ flutter run --dart-define-from-file=.env.dev.json
 
 | Package | What it does |
 |---|---|
-| `forge_core` | DI (GetIt), routing (go_router), theming (Material 3), env config |
-| `forge_backend` | Auth + DB + Storage — Supabase or Firebase, same interface |
+| `forge_core` | DI (GetIt), routing (go_router), RBAC (ForgeRole), theming (Material 3) |
+| `forge_backend` | Auth + DB + Storage + Role mapping — Supabase or Firebase |
 | `forge_payments` | Razorpay + Stripe + IAP — same `PaymentGateway` interface |
 | `forge_analytics` | PostHog + Mixpanel + Firebase — one `Analytics.track()` call |
 | `forge_state` | Riverpod providers + SecureStorage + in-memory cache |
-| `forge_cli` | `forge create`, `forge generate`, `forge doctor` |
+| `forge_cli` | Config-driven scaffolding: `forge create`, `forge generate`, `forge doctor` |
+
+## Recent Enhancements
+
+- **Role-Based Access Control (RBAC)**: Built-in support for user roles (`admin`, `user`, `guest`). Use `RBACGate` for UI-level protection and `ForgeRoleGuard` for route-level redirection.
+- **Config-Driven Scaffolding**: Scaffolding now supports passing names and contact numbers, and is fully driven by `forge.yaml`.
+- **Improved CLI**: New `forge doctor` command to verify your environment and `forge generate` to refresh DI/Routing boilerplate.
 
 ## Quick Start
 
