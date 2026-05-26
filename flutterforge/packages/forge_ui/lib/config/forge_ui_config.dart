@@ -18,6 +18,7 @@ class ForgeUIConfig {
   final ForgeLoginConfig login;
   final ForgeSubscriptionConfig subscription;
   final ForgeProfileConfig profile;
+  final Map<String, bool> features;
 
   const ForgeUIConfig({
     required this.global,
@@ -25,6 +26,7 @@ class ForgeUIConfig {
     required this.login,
     required this.subscription,
     required this.profile,
+    this.features = const {},
   });
 
   /// Default fallback configuration
@@ -35,6 +37,7 @@ class ForgeUIConfig {
       login: const ForgeLoginConfig(),
       subscription: ForgeSubscriptionConfig.fallback(),
       profile: const ForgeProfileConfig(),
+      features: const {},
     );
   }
 }

@@ -86,6 +86,12 @@ class CreateCommand extends Command<void> {
     print('📦 Updating pubspec.yaml assets...');
     _updatePubspecAssets(projectDir.path);
 
+    // 3.7. Update pubspec.yaml dependencies section
+    print('📦 Updating pubspec.yaml dependencies...');
+    _updatePubspecDependencies(projectDir.path,
+        includePayments: includePayments,
+        includeAnalytics: includeAnalytics);
+
     // 4. Write .gitignore additions
     _updateGitignore(projectDir.path);
 
@@ -353,10 +359,11 @@ profile:
     // Check if assets/ui_config.yaml is already present
     if (content.contains('assets/ui_config.yaml')) return;
 
-    // Find the 'flutter:' section
-    if (content.contains('flutter:')) {
-      final flutterIndex = content.indexOf('flutter:');
-      final nextLineIndex = content.indexOf('\n', flutterIndex);
+    // Find the 'flutter:' section at the start of a line
+    final flutterRegex = RegExp(r'^flutter:', multiLine: true);
+    if (content.contains(flutterRegex)) {
+      final match = flutterRegex.firstMatch(content)!;
+      final nextLineIndex = content.indexOf('\n', match.start);
       if (nextLineIndex != -1) {
         content = content.replaceRange(
           nextLineIndex,
@@ -366,6 +373,62 @@ profile:
       }
     } else {
       content += '\nflutter:\n  assets:\n    - assets/ui_config.yaml\n';
+    }
+
+    file.writeAsStringSync(content);
+  }
+
+  void _updatePubspecDependencies(
+    String dir, {
+    required bool includePayments,
+    required bool includeAnalytics,
+  }) {
+    final file = File(p.join(dir, 'pubspec.yaml'));
+    if (!file.existsSync()) return;
+
+    var content = file.readAsStringSync();
+
+    // Check if we already added these
+    if (content.contains('forge_core:')) return;
+
+    final dependenciesText = StringBuffer('''
+  flutter_riverpod: ^2.5.1
+  go_router: ^12.0.0
+  get_it: ^7.6.0
+
+  # FlutterForge packages (path relative to this project)
+  forge_core:
+    path: ../../packages/forge_core
+  forge_backend:
+    path: ../../packages/forge_backend
+  forge_state:
+    path: ../../packages/forge_state
+  forge_ui:
+    path: ../../packages/forge_ui
+''');
+
+    if (includePayments) {
+      dependenciesText.writeln('''  forge_payments:
+    path: ../../packages/forge_payments''');
+    }
+
+    if (includeAnalytics) {
+      dependenciesText.writeln('''  forge_analytics:
+    path: ../../packages/forge_analytics''');
+    }
+
+    // Insert under dependencies:
+    final depRegex = RegExp(r'^dependencies:', multiLine: true);
+    if (content.contains(depRegex)) {
+      final match = depRegex.firstMatch(content)!;
+      final nextLineIndex = content.indexOf('\n', match.start);
+      if (nextLineIndex != -1) {
+        content = content.replaceRange(
+          nextLineIndex,
+          nextLineIndex,
+          '\n' + dependenciesText.toString(),
+        );
+      }
     }
 
     file.writeAsStringSync(content);

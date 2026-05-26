@@ -32,12 +32,14 @@ class ForgeRouter {
     required List<RouteBase> routes,
     String initialLocation = '/',
     GoRouterRedirect? redirect,
+    Listenable? refreshListenable,
     List<NavigatorObserver> observers = const [],
   }) {
     _router = GoRouter(
       initialLocation: initialLocation,
       routes: routes,
       redirect: redirect,
+      refreshListenable: refreshListenable,
       observers: observers,
       errorBuilder: (context, state) => Scaffold(
         appBar: AppBar(title: const Text('Page Not Found')),
