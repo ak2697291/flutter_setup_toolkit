@@ -261,12 +261,14 @@ final List<RouteBase> appRoutes = [
     sb.writeln("class AppRoles {");
 
     for (final role in config.rbac!.roles) {
-      sb.writeln("  static const $role = ForgeRole('$role');");
+      final camelRole = _toCamelCase(role);
+      sb.writeln("  static const $camelRole = ForgeRole('$role');");
     }
 
     sb.writeln();
     final defaultRole = config.rbac!.defaultRole ?? config.rbac!.roles.first;
-    sb.writeln("  static const defaultRole = $defaultRole;");
+    final camelDefault = _toCamelCase(defaultRole);
+    sb.writeln("  static const defaultRole = $camelDefault;");
     sb.writeln("}");
 
     final file = File(p.join('lib', 'rbac_config.dart'));
@@ -275,4 +277,11 @@ final List<RouteBase> appRoutes = [
 
   String _className(String name) =>
       name.split(RegExp(r'[\s_-]+')).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+
+  String _toCamelCase(String s) {
+    final parts = s.split(RegExp(r'[\s_-]+'));
+    if (parts.isEmpty) return s;
+    return parts[0].toLowerCase() +
+        parts.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+  }
 }

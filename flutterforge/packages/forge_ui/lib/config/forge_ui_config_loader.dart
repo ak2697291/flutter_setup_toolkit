@@ -33,12 +33,17 @@ class ForgeUIConfigLoader {
       final profileYaml = doc['profile'];
       final profileConfig = _parseProfile(profileYaml);
 
+      // 6. Features config
+      final featuresYaml = doc['features'];
+      final featuresMap = _parseFeatures(featuresYaml);
+
       return ForgeUIConfig(
         global: globalConfig,
         onboarding: onboardingConfig,
         login: loginConfig,
         subscription: subscriptionConfig,
         profile: profileConfig,
+        features: featuresMap,
       );
     } catch (e) {
       // Return default fallback if parsing fails to avoid app crashes
@@ -166,6 +171,28 @@ class ForgeUIConfigLoader {
     );
   }
 
+  static Map<String, bool> _parseFeatures(dynamic yaml) {
+    final Map<String, bool> features = {};
+    if (yaml is! YamlMap) return features;
+
+    for (final entry in yaml.entries) {
+      final key = entry.key?.toString();
+      final value = entry.value;
+      if (key != null && value is bool) {
+        features[key] = value;
+      } else if (key != null && value is YamlMap) {
+        for (final subEntry in value.entries) {
+          final subKey = subEntry.key?.toString();
+          final subValue = subEntry.value;
+          if (subKey != null && subValue is bool) {
+            features['${key}_$subKey'] = subValue;
+          }
+        }
+      }
+    }
+    return features;
+  }
+
   // --- Parsing Helpers ---
 
   static IconData _parseIcon(String? name, {IconData defaultIcon = Icons.star_rounded}) {
@@ -191,6 +218,9 @@ class ForgeUIConfigLoader {
       case 'support':
       case 'question':
         return Icons.help_outline_rounded;
+      case 'insights': return Icons.insights_rounded;
+      case 'show_chart': return Icons.show_chart_rounded;
+      case 'psychology': return Icons.psychology_rounded;
       default: return defaultIcon;
     }
   }
