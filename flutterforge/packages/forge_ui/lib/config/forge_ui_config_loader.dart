@@ -159,15 +159,33 @@ class ForgeUIConfigLoader {
   static ForgeProfileConfig _parseProfile(dynamic yaml) {
     if (yaml is! YamlMap) return const ForgeProfileConfig();
 
+    final supportedYaml = yaml['supported_currencies'];
+    final List<String> supported = [];
+    if (supportedYaml is YamlList) {
+      for (final s in supportedYaml) {
+        supported.add(s.toString());
+      }
+    }
+
     return ForgeProfileConfig(
       title: yaml['title']?.toString() ?? 'Profile',
       premiumTierName: yaml['premium_tier_name']?.toString() ?? 'Pro Developer',
-      showBillingHistory: yaml['show_billing_history'] is bool ? yaml['show_billing_history'] as bool : true,
-      showPreferences: yaml['show_preferences'] is bool ? yaml['show_preferences'] as bool : true,
-      showSupport: yaml['show_support'] is bool ? yaml['show_support'] as bool : true,
+      showBillingHistory: yaml['show_billing_history'] is bool
+          ? yaml['show_billing_history'] as bool
+          : true,
+      showPreferences: yaml['show_preferences'] is bool
+          ? yaml['show_preferences'] as bool
+          : true,
+      showSupport:
+          yaml['show_support'] is bool ? yaml['show_support'] as bool : true,
       helpCenterUrl: yaml['help_center_url']?.toString(),
-      allowEditProfile: yaml['allow_edit_profile'] is bool ? yaml['allow_edit_profile'] as bool : true,
-      allowLogout: yaml['allow_logout'] is bool ? yaml['allow_logout'] as bool : true,
+      allowEditProfile: yaml['allow_edit_profile'] is bool
+          ? yaml['allow_edit_profile'] as bool
+          : true,
+      allowLogout:
+          yaml['allow_logout'] is bool ? yaml['allow_logout'] as bool : true,
+      supportedCurrencies:
+          supported.isEmpty ? const ['INR', 'USD', 'EUR'] : supported,
     );
   }
 

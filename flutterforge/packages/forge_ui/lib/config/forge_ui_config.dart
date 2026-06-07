@@ -248,6 +248,7 @@ class ForgeProfileConfig {
   final String? helpCenterUrl;
   final bool allowEditProfile;
   final bool allowLogout;
+  final List<String> supportedCurrencies;
 
   const ForgeProfileConfig({
     this.title = 'Profile',
@@ -258,5 +259,6 @@ class ForgeProfileConfig {
     this.helpCenterUrl,
     this.allowEditProfile = true,
     this.allowLogout = true,
+    this.supportedCurrencies = const ['INR', 'USD', 'EUR'],
   });
 }

@@ -27,13 +27,12 @@ class Analytics {
   Analytics._();
 
   static final List<AnalyticsProvider> _providers = [];
+  static final Map<String, dynamic> _globalProperties = {};
   static final Logger _log = Logger();
 
   static bool _initialized = false;
 
   /// Initialize analytics providers.
-  ///
-  /// Called automatically by AnalyticsModule.
   static void init(List<AnalyticsProvider> providers) {
     _providers
       ..clear()
@@ -42,9 +41,19 @@ class Analytics {
     _initialized = true;
 
     _log.d(
-      'Analytics initialized with ${providers.length} provider(s): '
-      '${providers.map((e) => e.name).join(', ')}',
+      'Analytics initialized with ${providers.length} provider(s)',
     );
+  }
+
+  /// Set a global property that will be attached to all subsequent events.
+  /// Useful for emailId, tenantId, or user role.
+  static void setGlobalProperty(String key, dynamic value) {
+    if (value == null) {
+      _globalProperties.remove(key);
+    } else {
+      _globalProperties[key] = value;
+    }
+    _log.d('Analytics global property set: $key = $value');
   }
 
   /// Track analytics event.
@@ -54,7 +63,10 @@ class Analytics {
   ]) async {
     _assertInitialized();
 
-    final safeProps = properties ?? {};
+    final safeProps = {
+      ..._globalProperties,
+      ...(properties ?? {}),
+    };
 
     _log.d('ANALYTICS EVENT → $event | $safeProps');
 
@@ -62,10 +74,7 @@ class Analytics {
       try {
         await provider.track(event, safeProps);
       } catch (e, stackTrace) {
-        _log.w(
-          'Analytics provider ${provider.name} failed for event '
-          '$event: $e\n$stackTrace',
-        );
+        _log.w('Analytics error: $e');
       }
     }
   }
@@ -77,18 +86,18 @@ class Analytics {
   }) async {
     _assertInitialized();
 
-    final safeProps = properties ?? {};
+    final safeProps = {
+      ..._globalProperties,
+      ...(properties ?? {}),
+    };
 
-    _log.d('ANALYTICS IDENTIFY → $userId');
+    _log.d('ANALYTICS IDENTIFY → $userId | $safeProps');
 
     for (final provider in _providers) {
       try {
         await provider.identify(userId, safeProps);
-      } catch (e, stackTrace) {
-        _log.w(
-          'Analytics identify failed for ${provider.name}: '
-          '$e\n$stackTrace',
-        );
+      } catch (e) {
+        _log.w('Identify error: $e');
       }
     }
   }
@@ -100,34 +109,30 @@ class Analytics {
   ]) async {
     _assertInitialized();
 
-    final safeProps = properties ?? {};
+    final safeProps = {
+      ..._globalProperties,
+      ...(properties ?? {}),
+    };
 
-    _log.d('ANALYTICS SCREEN → $screenName');
+    _log.d('ANALYTICS SCREEN → $screenName | $safeProps');
 
     for (final provider in _providers) {
       try {
         await provider.screen(screenName, safeProps);
-      } catch (e, stackTrace) {
-        _log.w(
-          'Analytics screen failed for ${provider.name}: '
-          '$e\n$stackTrace',
-        );
+      } catch (e) {
+        _log.w('Screen error: $e');
       }
     }
   }
 
   /// Reset analytics session.
-  ///
-  /// Useful on logout.
   static Future<void> reset() async {
+    _globalProperties.clear();
     for (final provider in _providers) {
       try {
         await provider.reset();
-      } catch (e, stackTrace) {
-        _log.w(
-          'Analytics reset failed for ${provider.name}: '
-          '$e\n$stackTrace',
-        );
+      } catch (e) {
+        _log.w('Reset error: $e');
       }
     }
   }
