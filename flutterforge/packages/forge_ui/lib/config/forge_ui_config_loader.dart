@@ -33,12 +33,17 @@ class ForgeUIConfigLoader {
       final profileYaml = doc['profile'];
       final profileConfig = _parseProfile(profileYaml);
 
+      // 6. Features config
+      final featuresYaml = doc['features'];
+      final featuresMap = _parseFeatures(featuresYaml);
+
       return ForgeUIConfig(
         global: globalConfig,
         onboarding: onboardingConfig,
         login: loginConfig,
         subscription: subscriptionConfig,
         profile: profileConfig,
+        features: featuresMap,
       );
     } catch (e) {
       // Return default fallback if parsing fails to avoid app crashes
@@ -154,16 +159,56 @@ class ForgeUIConfigLoader {
   static ForgeProfileConfig _parseProfile(dynamic yaml) {
     if (yaml is! YamlMap) return const ForgeProfileConfig();
 
+    final supportedYaml = yaml['supported_currencies'];
+    final List<String> supported = [];
+    if (supportedYaml is YamlList) {
+      for (final s in supportedYaml) {
+        supported.add(s.toString());
+      }
+    }
+
     return ForgeProfileConfig(
       title: yaml['title']?.toString() ?? 'Profile',
       premiumTierName: yaml['premium_tier_name']?.toString() ?? 'Pro Developer',
-      showBillingHistory: yaml['show_billing_history'] is bool ? yaml['show_billing_history'] as bool : true,
-      showPreferences: yaml['show_preferences'] is bool ? yaml['show_preferences'] as bool : true,
-      showSupport: yaml['show_support'] is bool ? yaml['show_support'] as bool : true,
+      showBillingHistory: yaml['show_billing_history'] is bool
+          ? yaml['show_billing_history'] as bool
+          : true,
+      showPreferences: yaml['show_preferences'] is bool
+          ? yaml['show_preferences'] as bool
+          : true,
+      showSupport:
+          yaml['show_support'] is bool ? yaml['show_support'] as bool : true,
       helpCenterUrl: yaml['help_center_url']?.toString(),
-      allowEditProfile: yaml['allow_edit_profile'] is bool ? yaml['allow_edit_profile'] as bool : true,
-      allowLogout: yaml['allow_logout'] is bool ? yaml['allow_logout'] as bool : true,
+      allowEditProfile: yaml['allow_edit_profile'] is bool
+          ? yaml['allow_edit_profile'] as bool
+          : true,
+      allowLogout:
+          yaml['allow_logout'] is bool ? yaml['allow_logout'] as bool : true,
+      supportedCurrencies:
+          supported.isEmpty ? const ['INR', 'USD', 'EUR'] : supported,
     );
+  }
+
+  static Map<String, bool> _parseFeatures(dynamic yaml) {
+    final Map<String, bool> features = {};
+    if (yaml is! YamlMap) return features;
+
+    for (final entry in yaml.entries) {
+      final key = entry.key?.toString();
+      final value = entry.value;
+      if (key != null && value is bool) {
+        features[key] = value;
+      } else if (key != null && value is YamlMap) {
+        for (final subEntry in value.entries) {
+          final subKey = subEntry.key?.toString();
+          final subValue = subEntry.value;
+          if (subKey != null && subValue is bool) {
+            features['${key}_$subKey'] = subValue;
+          }
+        }
+      }
+    }
+    return features;
   }
 
   // --- Parsing Helpers ---
@@ -191,6 +236,9 @@ class ForgeUIConfigLoader {
       case 'support':
       case 'question':
         return Icons.help_outline_rounded;
+      case 'insights': return Icons.insights_rounded;
+      case 'show_chart': return Icons.show_chart_rounded;
+      case 'psychology': return Icons.psychology_rounded;
       default: return defaultIcon;
     }
   }

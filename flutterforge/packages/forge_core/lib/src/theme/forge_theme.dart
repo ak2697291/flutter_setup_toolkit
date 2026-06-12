@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// ForgeTheme — Material 3 theming helpers.
 ///
@@ -15,10 +16,18 @@ class ForgeTheme {
     String fontFamily = 'Roboto',
     double borderRadius = 12.0,
   }) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.light,
+      surface: const Color(0xFFF8F9FA),
+    );
     return _build(
-      colorScheme: ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.light),
+      colorScheme: colorScheme,
       fontFamily: fontFamily,
       borderRadius: borderRadius,
+    ).copyWith(
+      scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+      cardColor: Colors.white,
     );
   }
 
@@ -27,10 +36,19 @@ class ForgeTheme {
     String fontFamily = 'Roboto',
     double borderRadius = 12.0,
   }) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+      surface: const Color(0xFF0A0E21),
+      surfaceContainerHighest: const Color(0xFF12172D),
+    );
     return _build(
-      colorScheme: ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.dark),
+      colorScheme: colorScheme,
       fontFamily: fontFamily,
       borderRadius: borderRadius,
+    ).copyWith(
+      scaffoldBackgroundColor: const Color(0xFF0A0E21),
+      cardColor: const Color(0xFF12172D),
     );
   }
 
@@ -49,6 +67,9 @@ class ForgeTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
+        systemOverlayStyle: colorScheme.brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
       cardTheme: CardThemeData(
         elevation: 2,
